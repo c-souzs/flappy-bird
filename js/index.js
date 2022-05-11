@@ -39,7 +39,15 @@ const chao = {
     this.img.src = "./images/chao.png";
     this.y = canvasAltura - this.img.height;
     ctx.drawImage(this.img, this.x, this.y);
-  }
+  },
+  atualizar() {
+    this.x = this.x === -canvasLargura ? 0 : this.x - 1;
+
+    // Lógica alternativa
+    //const momentoRepeticao = chao.img.width / 2;
+    //const movimentacao = chao.x - 1;
+    //this.x = movimentacao % momentoRepeticao;
+  },
 };
 
 // Renderiza o fundo na tela
@@ -62,7 +70,7 @@ const passarinho = {
   desenhar() {
     this.img.src = "./images/passarinho-0.png";
     ctx.drawImage(this.img, this.x, this.y);
-  }
+  },
 };
 
 // Baseado no estado do jogo é renderizado certos elementos
@@ -74,7 +82,13 @@ const elementosTela = {
       this.mensagemGetReady.desenhar();
       this.mensagemTapTap.desenhar();
       passarinho.desenhar();
+
     } else if (estado.jogando) {
+      chao.atualizar();
+      this.canos.atualizar();
+      this.canos.desenhar();
+      this.pontuacao.desenhar();
+
     } else if (estado.morto) {
     }
   },
@@ -103,6 +117,7 @@ const elementosTela = {
       ctx.drawImage(this.img, this.x, this.y);
     },
     atualizar() {
+      // A cada 10 frames ele atualiza a imagem
       this.frame += frames % 10 == 0 ? 1 : 0;
       this.frame = this.frame % 2;
 
@@ -110,8 +125,71 @@ const elementosTela = {
         ? "./images/clique-jogar-animado.png"
         : "./images/clique-jogar.png";
     },
+  },
+  canos: {
+    superior: new Image(),
+    inferior: new Image(),
+    espacamento: 85,
+    pares: [],
+    mover: true,
+    desenhar() {
+      this.pares.forEach((par) => {
+        this.superior.src = "./images/cano-topo.png";
+        this.inferior.src = "./images/cano-chao.png";
+        const yInferior = par.y + (this.inferior.height + this.espacamento);
+
+        ctx.drawImage(this.superior, par.x, par.y);
+        ctx.drawImage(this.inferior, par.x, yInferior);
+      });
+    },
+    atualizar() {
+      if (!estado.jogando) return;
+
+      if (!(frames % 100)) {
+        const canoDados = {
+          x: canvasLargura,
+          y: -210 * Math.min(Math.random() + 1, 1.8),
+        };
+
+        this.pares.push(canoDados);
+      }
+
+      this.pares.forEach((par) => {
+        par.x -= 2;
+      });
+
+      if (this.pares.length && this.pares[0].x < -this.superior.width) {
+        this.pares.shift();
+        this.mover = true;
+      }
+    },
+  },
+  pontuacao: {
+    desenhar() {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = "2";
+      ctx.font = "35px Squada One";
+      ctx.fillText(estado.pontuacao, canvasLargura / 2 - 5, 50);
+      ctx.strokeText(estado.pontuacao, canvasLargura / 2 - 5, 50);
+    },
+  },
+};
+
+// Baseado no estado do jogo faz certa ação com o clique
+const jogar = () => {
+  if (estado.inicial) {
+    estado.inicial = false;
+    estado.jogando = true;
+  } else if (estado.jogando) {
+    estado.morto = false;
+  } else if (estado.morto) {
+    estado.inicial = true;
+    estado.jogando = false;
   }
 };
+
+canvas.addEventListener("click", jogar);
 
 // Função que é executada a cada frame
 const loopJogo = () => {
