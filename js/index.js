@@ -19,7 +19,7 @@ const estrutura: {
 }
 */
 
-// Variáveis de controe do estado do jogo
+// Variáveis de controle do estado do jogo
 const estado = {
   inicial: true,
   jogando: false,
@@ -67,10 +67,20 @@ const passarinho = {
   img: new Image(),
   x: 25,
   y: 50,
+  gravidade: 0.125,
+  velocidade: 0,
+  impulso: 3.6,
   desenhar() {
     this.img.src = "./images/passarinho-0.png";
     ctx.drawImage(this.img, this.x, this.y);
   },
+  atualizar() {
+    this.velocidade = this.velocidade + this.gravidade;
+    this.y = this.y + this.velocidade;
+  },
+  pular() {
+    this.velocidade = -this.impulso;
+  }
 };
 
 // Baseado no estado do jogo é renderizado certos elementos
@@ -82,13 +92,14 @@ const elementosTela = {
       this.mensagemGetReady.desenhar();
       this.mensagemTapTap.desenhar();
       passarinho.desenhar();
-
     } else if (estado.jogando) {
+
       chao.atualizar();
+      passarinho.atualizar();
       this.canos.atualizar();
+
       this.canos.desenhar();
       this.pontuacao.desenhar();
-
     } else if (estado.morto) {
     }
   },
@@ -117,7 +128,6 @@ const elementosTela = {
       ctx.drawImage(this.img, this.x, this.y);
     },
     atualizar() {
-      // A cada 10 frames ele atualiza a imagem
       this.frame += frames % 10 == 0 ? 1 : 0;
       this.frame = this.frame % 2;
 
@@ -183,6 +193,8 @@ const jogar = () => {
     estado.jogando = true;
   } else if (estado.jogando) {
     estado.morto = false;
+    passarinho.pular();
+    return;
   } else if (estado.morto) {
     estado.inicial = true;
     estado.jogando = false;
