@@ -3,34 +3,14 @@ const ctx = canvas.getContext("2d");
 
 const canvasAltura = canvas.offsetHeight;
 const canvasLargura = canvas.offsetWidth;
-
-/*
-Estrutura padrão de um objeto
-const estrutura: {
-  img: new Image, Cria um elemento <img />
-  x: 0, Posição x do elemento dentro do canvas
-  y: 0, Posição y do elemento dentro do canvas
-  desenhar(){
-    Seta o src da imagem, calcula as posições x e y, etc...
-  },
-  atualizar(){
-    Não é obrigatório, somente caso deseje atualizar algo no elemento
-  }
-}
-*/
-
-// Variáveis de controle do estado do jogo
 const estado = {
   inicial: true,
   jogando: false,
   morto: false,
   pontuacao: 0,
 };
-
-// Conta o frame para fazer certas animações
 let frames = 0;
 
-// Renderiza o chão na tela
 const chao = {
   img: new Image(),
   x: 0,
@@ -50,7 +30,6 @@ const chao = {
   },
 };
 
-// Renderiza o fundo na tela
 const fundo = {
   img: new Image(),
   x: 0,
@@ -62,7 +41,6 @@ const fundo = {
   },
 };
 
-// Desenha o passarinho na tela. É responsável por fazer todos os movimentos do mesmo
 const passarinho = {
   img: new Image(),
   x: 25,
@@ -75,15 +53,44 @@ const passarinho = {
     ctx.drawImage(this.img, this.x, this.y);
   },
   atualizar() {
+    this.colissoes();
     this.velocidade = this.velocidade + this.gravidade;
     this.y = this.y + this.velocidade;
   },
   pular() {
     this.velocidade = -this.impulso;
-  }
-};
+  },
+  colissoes() {
+    const cChao = this.y + this.img.height >= chao.y;
+    const cCanos = () => {
+      const ref = elementosTela.canos;
+      if (!ref.pares.length) return;
+      const aSuperior = ref.superior.height;
+      const aInferior = ref.inferior.height;
 
-// Baseado no estado do jogo é renderizado certos elementos
+      const ySuperior = ref.pares[0].y;
+      const yInferior = ySuperior + (aInferior + ref.espacamento);
+      const dSuperior = ySuperior + aSuperior;
+
+      const x = ref.pares[0].x;
+
+      if (this.x + this.img.width >= x) {
+        if (this.x + this.img.width < x + ref.inferior.width) {
+          if (this.y - (this.img.height / 2) <= dSuperior || this.y + (this.img.height / 2) >= yInferior) {
+            return true;
+          }
+        } else {
+          return false;
+        }
+      }
+    };
+    if (cChao || cCanos()) {
+      // Finalizar o jogo
+    } else{
+      // Adicionar pontuação
+    }
+  },
+};
 const elementosTela = {
   add() {
     if (estado.inicial) {
@@ -93,11 +100,9 @@ const elementosTela = {
       this.mensagemTapTap.desenhar();
       passarinho.desenhar();
     } else if (estado.jogando) {
-
       chao.atualizar();
       passarinho.atualizar();
       this.canos.atualizar();
-
       this.canos.desenhar();
       this.pontuacao.desenhar();
     } else if (estado.morto) {
@@ -186,7 +191,6 @@ const elementosTela = {
   },
 };
 
-// Baseado no estado do jogo faz certa ação com o clique
 const jogar = () => {
   if (estado.inicial) {
     estado.inicial = false;
@@ -203,7 +207,6 @@ const jogar = () => {
 
 canvas.addEventListener("click", jogar);
 
-// Função que é executada a cada frame
 const loopJogo = () => {
   frames++;
 
