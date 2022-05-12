@@ -54,7 +54,6 @@ const chao = {
     //this.x = movimentacao % momentoRepeticao;
   },
 };
-
 const passarinho = {
   img: new Image(),
   x: 25,
@@ -108,9 +107,10 @@ const passarinho = {
 
       if (this.x + this.img.width >= x) {
         if (this.x + this.img.width < x + canos.inferior.width) {
+          // Na hora de adicionar o cano superior já é considerado a altura do passarinho
           if (
-            this.y - this.img.height / 2 <= dSuperior ||
-            this.y + this.img.height / 2 >= yInferior
+            this.y  <= dSuperior ||
+            this.y + this.img.height >= yInferior
           )
             return true;
         } else return false;
@@ -154,12 +154,9 @@ const canos = {
       par.x -= 2;
     });
 
-    if (
-      this.pares.length &&
-      this.pares[0].x < this.superior.width - (this.superior.width + 10)
-    ) {
-      this.pares.shift();
+    if (this.pares.length && this.pares[0].x < - this.superior.width - 10) {
       this.pontuar = true;
+      this.pares.shift();
     }
   },
 };
@@ -298,12 +295,14 @@ const elementosTelaAdd = () => {
     passarinho.desenhar();
     elementosTela.pontuacao.desenhar();
   } else if (infoJogo.morto) {
+    canos.atualizar();
     elementosTela.mensagemTapTap.atualizar();
+    canos.desenhar();
     elementosTela.pontuacao.desenhar();
     elementosTela.mensagemGameOver.desenhar();
     elementosTela.mensagemTapTap.desenhar();
-    chao.desenhar();
     passarinho.animar();
+    chao.desenhar();
     passarinho.desenhar();
   }
 };
@@ -325,12 +324,11 @@ canvas.addEventListener("click", jogar);
 
 const loopJogo = () => {
   frames++;
-
+  ctx.clearRect(0, 0, canvasLargura, canvasAltura);
   ctx.fillStyle = "#30c0df";
   ctx.fillRect(0, 0, canvasLargura, canvasAltura);
 
   fundo.desenhar();
-
   elementosTelaAdd();
 
   requestAnimationFrame(loopJogo);
