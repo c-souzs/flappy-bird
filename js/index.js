@@ -3,13 +3,38 @@ const ctx = canvas.getContext("2d");
 
 const canvasAltura = canvas.offsetHeight;
 const canvasLargura = canvas.offsetWidth;
-const estado = {
+
+/*Estrutura básica de um elemento:
+const elemento = {
+  img: new Image(),
+  x: 0,
+  y: 0,
+  desenhar(){
+
+  },
+  atualizar(){
+
+  }
+}
+*/
+const infoJogo = {
   inicial: true,
   jogando: false,
   morto: false,
   pontuacao: 0,
 };
 let frames = 0;
+
+const fundo = {
+  img: new Image(),
+  x: 0,
+  y: 0,
+  desenhar() {
+    this.img.src = "./images/fundo.png";
+    this.y = canvasAltura - this.img.height;
+    ctx.drawImage(this.img, this.x, this.y);
+  },
+};
 
 const chao = {
   img: new Image(),
@@ -30,17 +55,6 @@ const chao = {
   },
 };
 
-const fundo = {
-  img: new Image(),
-  x: 0,
-  y: 0,
-  desenhar() {
-    this.img.src = "./images/fundo.png";
-    this.y = canvasAltura - this.img.height;
-    ctx.drawImage(this.img, this.x, this.y);
-  },
-};
-
 const passarinho = {
   img: new Image(),
   x: 25,
@@ -53,7 +67,11 @@ const passarinho = {
     ctx.drawImage(this.img, this.x, this.y);
   },
   atualizar() {
-    this.colissoes();
+    if(this.colissoes()){
+      infoJogo.jogando = false;
+      infoJogo.morto = true;
+      return;
+    }
     this.velocidade = this.velocidade + this.gravidade;
     this.y = this.y + this.velocidade;
   },
@@ -63,51 +81,69 @@ const passarinho = {
   colissoes() {
     const cChao = this.y + this.img.height >= chao.y;
     const cCanos = () => {
-      const ref = elementosTela.canos;
-      if (!ref.pares.length) return;
-      const aSuperior = ref.superior.height;
-      const aInferior = ref.inferior.height;
+      if (!canos.pares.length) return;
+      const aSuperior = canos.superior.height;
+      const aInferior = canos.inferior.height;
 
-      const ySuperior = ref.pares[0].y;
-      const yInferior = ySuperior + (aInferior + ref.espacamento);
+      const ySuperior = canos.pares[0].y;
+      const yInferior = ySuperior + (aInferior + canos.espacamento);
       const dSuperior = ySuperior + aSuperior;
 
-      const x = ref.pares[0].x;
+      const x = canos.pares[0].x;
 
       if (this.x + this.img.width >= x) {
-        if (this.x + this.img.width < x + ref.inferior.width) {
-          if (this.y - (this.img.height / 2) <= dSuperior || this.y + (this.img.height / 2) >= yInferior) {
-            return true;
-          }
-        } else {
-          return false;
-        }
+        if (this.x + this.img.width < x + canos.inferior.width) {
+          if (
+            this.y - this.img.height / 2 <= dSuperior ||
+            this.y + this.img.height / 2 >= yInferior
+          ) return true;
+        } else return false;
       }
     };
-    if (cChao || cCanos()) {
-      // Finalizar o jogo
-    } else{
-      // Adicionar pontuação
+
+    const retorno = (cChao || cCanos()) ? true : false;
+
+    return retorno;
+  },
+};
+
+const canos = {
+  superior: new Image(),
+  inferior: new Image(),
+  espacamento: 85,
+  pares: [],
+  desenhar() {
+    this.pares.forEach((par) => {
+      this.superior.src = "./images/cano-topo.png";
+      this.inferior.src = "./images/cano-chao.png";
+      const yInferior = par.y + (this.inferior.height + this.espacamento);
+
+      ctx.drawImage(this.superior, par.x, par.y);
+      ctx.drawImage(this.inferior, par.x, yInferior);
+    });
+  },
+  atualizar() {
+    if (!infoJogo.jogando) return;
+    if (!(frames % 100)) {
+      const canoDados = {
+        x: canvasLargura,
+        y: -210 * Math.min(Math.random() + 1, 1.8),
+      };
+
+      this.pares.push(canoDados);
+    }
+
+    this.pares.forEach((par) => {
+      par.x -= 2;
+    });
+
+    if (this.pares.length && this.pares[0].x < -this.superior.width) {
+      this.pares.shift();
     }
   },
 };
-const elementosTela = {
-  add() {
-    if (estado.inicial) {
-      this.mensagemTapTap.atualizar();
 
-      this.mensagemGetReady.desenhar();
-      this.mensagemTapTap.desenhar();
-      passarinho.desenhar();
-    } else if (estado.jogando) {
-      chao.atualizar();
-      passarinho.atualizar();
-      this.canos.atualizar();
-      this.canos.desenhar();
-      this.pontuacao.desenhar();
-    } else if (estado.morto) {
-    }
-  },
+const elementosTela = {
   mensagemGetReady: {
     img: new Image(),
     x: 0,
@@ -141,42 +177,17 @@ const elementosTela = {
         : "./images/clique-jogar.png";
     },
   },
-  canos: {
-    superior: new Image(),
-    inferior: new Image(),
-    espacamento: 85,
-    pares: [],
-    mover: true,
+  mensagemGameOver: {
+    img: new Image(),
+    x: 0,
+    y: 0,
     desenhar() {
-      this.pares.forEach((par) => {
-        this.superior.src = "./images/cano-topo.png";
-        this.inferior.src = "./images/cano-chao.png";
-        const yInferior = par.y + (this.inferior.height + this.espacamento);
+      this.img.src = "./images/fim-jogo.png";
 
-        ctx.drawImage(this.superior, par.x, par.y);
-        ctx.drawImage(this.inferior, par.x, yInferior);
-      });
-    },
-    atualizar() {
-      if (!estado.jogando) return;
+      this.y = canvasAltura / 2 - this.img.height / 2 - 25;
+      this.x = canvasLargura / 2 - this.img.width / 2;
 
-      if (!(frames % 100)) {
-        const canoDados = {
-          x: canvasLargura,
-          y: -210 * Math.min(Math.random() + 1, 1.8),
-        };
-
-        this.pares.push(canoDados);
-      }
-
-      this.pares.forEach((par) => {
-        par.x -= 2;
-      });
-
-      if (this.pares.length && this.pares[0].x < -this.superior.width) {
-        this.pares.shift();
-        this.mover = true;
-      }
+      ctx.drawImage(this.img, this.x, this.y);
     },
   },
   pontuacao: {
@@ -184,24 +195,94 @@ const elementosTela = {
       ctx.fillStyle = "#FFFFFF";
       ctx.strokeStyle = "#000000";
       ctx.lineWidth = "2";
-      ctx.font = "35px Squada One";
-      ctx.fillText(estado.pontuacao, canvasLargura / 2 - 5, 50);
-      ctx.strokeText(estado.pontuacao, canvasLargura / 2 - 5, 50);
+      if (infoJogo.jogando) {
+        ctx.font = "35px Squada One";
+        ctx.fillText(infoJogo.pontuacao, canvasLargura / 2 - 5, 60);
+        ctx.strokeText(infoJogo.pontuacao, canvasLargura / 2 - 5, 60);
+      } else if (infoJogo.morto) {
+        ctx.font = "35px Squada One";
+        ctx.fillText(
+          `Pontuação: ${infoJogo.pontuacao}`,
+          canvasLargura / 2 - 85,
+          canvasAltura / 2 - 20
+        );
+        ctx.strokeText(
+          `Pontuação: ${infoJogo.pontuacao}`,
+          canvasLargura / 2 - 85,
+          canvasAltura / 2 - 20
+        );
+
+        let recorde = +localStorage.getItem("recorde");
+
+        if (recorde) {
+          const quebrouRecorde = infoJogo.pontuacao > recorde;
+          quebrouRecorde
+            ? localStorage.setItem("recorde", infoJogo.pontuacao)
+            : "";
+          quebrouRecorde ? (recorde = infoJogo.pontuacao) : "";
+        } else {
+          localStorage.setItem("recorde", infoJogo.pontuacao);
+        }
+
+        ctx.font = "35px Squada One";
+        ctx.fillText(
+          `Recorde: ${recorde}`,
+          canvasLargura / 2 - 65,
+          canvasAltura / 2 + 15
+        );
+        ctx.strokeText(
+          `Recorde: ${recorde}`,
+          canvasLargura / 2 - 65,
+          canvasAltura / 2 + 15
+        );
+      }
     },
   },
 };
 
+const elementosTelaAdd = () => {
+  if (infoJogo.inicial) {
+    passarinho.x = 25;
+    passarinho.y = 50;
+    passarinho.velocidade = 0;
+    const canosArray = canos.pares;
+    for (let i = 0; i < canosArray.length; i++) {
+      canosArray.pop();
+    }
+
+    elementosTela.mensagemTapTap.atualizar();
+    elementosTela.mensagemGetReady.desenhar();
+    elementosTela.mensagemTapTap.desenhar();
+    passarinho.desenhar();
+    chao.desenhar();
+  } else if (infoJogo.jogando) {
+    chao.atualizar();
+    canos.atualizar();
+    passarinho.atualizar();
+    canos.desenhar();
+    chao.desenhar();
+    passarinho.desenhar();
+    elementosTela.pontuacao.desenhar();
+  } else if (infoJogo.morto) {
+    elementosTela.mensagemTapTap.atualizar();
+    elementosTela.pontuacao.desenhar();
+    elementosTela.mensagemGameOver.desenhar();
+    elementosTela.mensagemTapTap.desenhar();
+    chao.desenhar();
+    passarinho.desenhar();
+  }
+};
+
 const jogar = () => {
-  if (estado.inicial) {
-    estado.inicial = false;
-    estado.jogando = true;
-  } else if (estado.jogando) {
-    estado.morto = false;
+  if (infoJogo.inicial) {
+    infoJogo.inicial = false;
+    infoJogo.jogando = true;
+  } else if (infoJogo.jogando) {
     passarinho.pular();
-    return;
-  } else if (estado.morto) {
-    estado.inicial = true;
-    estado.jogando = false;
+  } else if(infoJogo.morto){
+    infoJogo.morto = false;
+    infoJogo.jogando = false;
+    infoJogo.inicial = true;
   }
 };
 
@@ -215,9 +296,7 @@ const loopJogo = () => {
 
   fundo.desenhar();
 
-  elementosTela.add();
-  passarinho.desenhar();
-  chao.desenhar();
+  elementosTelaAdd();
 
   requestAnimationFrame(loopJogo);
 };
