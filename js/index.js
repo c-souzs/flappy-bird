@@ -17,13 +17,19 @@ const elemento = {
   }
 }
 */
+
+// Armazena as variáveis de controle do jogo
 const infoJogo = {
   inicial: true,
   jogando: false,
   morto: false,
   pontuacao: 0,
 };
+
+// Contador de frame
 let frames = 0;
+
+// Áudios setados
 const audioColisao = new Audio(); 
 audioColisao.src = './audios/colisao.wav'
 const audioFim = new Audio(); 
@@ -35,6 +41,7 @@ audioPonto.src = './audios/ponto.wav';
 const audioPulou = new Audio(); 
 audioPulou.src = './audios/pulou.wav';
 
+// Fundo
 const fundo = {
   img: new Image(),
   x: 0,
@@ -46,6 +53,7 @@ const fundo = {
   },
 };
 
+// Chão com a lógica de movimentação inifnita
 const chao = {
   img: new Image(),
   x: 0,
@@ -64,6 +72,12 @@ const chao = {
     //this.x = movimentacao % momentoRepeticao;
   },
 };
+
+// Passarinho.
+// Passarinho - animar. Anima as asas do passarinho simulando que ele está batendo elas.
+// Passarinho - atualizar. Verifica se tem alguma colisão, caso tenha o jogo é dado em game over, caso não a gravidade age sobre o passarinho.
+// Passarinho - pular. Diminui a velocidade de baseado no impuso do pulo.
+// Passarinho -colisões. Verifica se tem uma colisão com o chão. Também, baseado no valores do primeiro par de canos ele verifica se as coordernadas do passarinho bate com a desse par, caso sim a colisão é retornada como true.
 const passarinho = {
   img: new Image(),
   x: 25,
@@ -137,6 +151,7 @@ const passarinho = {
   },
 };
 
+// Canos - atualizar. Primeiro trata o eixo x do cano, adicionado no fim do canvas e a cada atualização desloca ele para a esquerda. Já no eixo y o valor do tamanho máximo do cano (210) é multiplicado por um valor aleatório. Na hora de desenhar o cano inferior o espaçamento entre eles deve ser somado a esse valor.
 const canos = {
   superior: new Image(),
   inferior: new Image(),
@@ -167,14 +182,15 @@ const canos = {
     this.pares.forEach((par) => {
       par.x -= 2;
     });
-
-    if (this.pares.length && this.pares[0].x < - this.superior.width - 10) {
+    
+    if (this.pares.length && this.pares[0].x < -(this.inferior.width / 2)) {
       this.pontuar = true;
       this.pares.shift();
     }
   },
 };
 
+// Contem elementos que depende do estado do jogo
 const elementosTela = {
   mensagemGetReady: {
     img: new Image(),
@@ -282,6 +298,7 @@ const elementosTela = {
   },
 };
 
+// Baseado no estado do jogo configura e exibe os elementos na tela
 const elementosTelaAdd = () => {
   if (infoJogo.inicial) {
     passarinho.x = 25;
@@ -312,15 +329,16 @@ const elementosTelaAdd = () => {
     canos.atualizar();
     elementosTela.mensagemTapTap.atualizar();
     canos.desenhar();
+    passarinho.desenhar();
     elementosTela.pontuacao.desenhar();
     elementosTela.mensagemGameOver.desenhar();
     elementosTela.mensagemTapTap.desenhar();
     passarinho.animar();
     chao.desenhar();
-    passarinho.desenhar();
   }
 };
 
+// Trata os eventos de clique e tecla
 const jogar = (e) => {
   const teclaCodigo = e.keyCode;
   if(!(teclaCodigo === 32 || e.type === 'click')) return;
@@ -340,6 +358,7 @@ const jogar = (e) => {
 canvas.addEventListener("click", jogar);
 window.addEventListener('keydown', jogar);
 
+// Função executada a cada frame. Muito rápida.
 const loopJogo = () => {
   frames++;
   ctx.clearRect(0, 0, canvasLargura, canvasAltura);
