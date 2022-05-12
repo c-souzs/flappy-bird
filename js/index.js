@@ -62,9 +62,21 @@ const passarinho = {
   gravidade: 0.125,
   velocidade: 0,
   impulso: 3.6,
+  frame: 0,
   desenhar() {
-    this.img.src = "./images/passarinho-0.png";
     ctx.drawImage(this.img, this.x, this.y);
+  },
+  animar() {
+    this.frame += frames % 10 == 0 ? 1 : 0;
+    this.frame = this.frame % 3;
+
+    if (this.frame === 0) {
+      this.img.src = "./images/passarinho-1.png";
+    } else if (this.frame === 1) {
+      this.img.src = "./images/passarinho-0.png";
+    } else {
+      this.img.src = "./images/passarinho-2.png";
+    }
   },
   atualizar() {
     if (this.colissoes()) {
@@ -142,7 +154,10 @@ const canos = {
       par.x -= 2;
     });
 
-    if (this.pares.length && this.pares[0].x < (this.superior.width - (this.superior.width + 10))) {
+    if (
+      this.pares.length &&
+      this.pares[0].x < this.superior.width - (this.superior.width + 10)
+    ) {
       this.pares.shift();
       this.pontuar = true;
     }
@@ -270,6 +285,7 @@ const elementosTelaAdd = () => {
     elementosTela.mensagemTapTap.atualizar();
     elementosTela.mensagemGetReady.desenhar();
     elementosTela.mensagemTapTap.desenhar();
+    passarinho.animar();
     passarinho.desenhar();
     chao.desenhar();
   } else if (infoJogo.jogando) {
@@ -278,6 +294,7 @@ const elementosTelaAdd = () => {
     passarinho.atualizar();
     canos.desenhar();
     chao.desenhar();
+    passarinho.animar();
     passarinho.desenhar();
     elementosTela.pontuacao.desenhar();
   } else if (infoJogo.morto) {
@@ -286,6 +303,7 @@ const elementosTelaAdd = () => {
     elementosTela.mensagemGameOver.desenhar();
     elementosTela.mensagemTapTap.desenhar();
     chao.desenhar();
+    passarinho.animar();
     passarinho.desenhar();
   }
 };
