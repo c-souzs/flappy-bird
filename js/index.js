@@ -24,6 +24,16 @@ const infoJogo = {
   pontuacao: 0,
 };
 let frames = 0;
+const audioColisao = new Audio(); 
+audioColisao.src = './audios/colisao.wav'
+const audioFim = new Audio(); 
+audioFim.src = './audios/fim.wav'
+const audioIniciar = new Audio();
+audioIniciar.src = './audios/iniciar.wav'; 
+const audioPonto = new Audio(); 
+audioPonto.src = './audios/ponto.wav';
+const audioPulou = new Audio(); 
+audioPulou.src = './audios/pulou.wav';
 
 const fundo = {
   img: new Image(),
@@ -79,17 +89,21 @@ const passarinho = {
   },
   atualizar() {
     if (this.colissoes()) {
+      audioColisao.play();
       infoJogo.jogando = false;
       infoJogo.morto = true;
+      audioFim.play();
       return;
     } else {
       this.velocidade = this.velocidade + this.gravidade;
       this.y = this.y + this.velocidade;
       canos.pontuar ? infoJogo.pontuacao++ : "";
+      canos.pontuar ? audioPonto.play() : '';
       canos.pontuar = false;
     }
   },
   pular() {
+    audioPulou.play();
     this.velocidade = -this.impulso;
   },
   colissoes() {
@@ -307,8 +321,11 @@ const elementosTelaAdd = () => {
   }
 };
 
-const jogar = () => {
+const jogar = (e) => {
+  const teclaCodigo = e.keyCode;
+  if(!(teclaCodigo === 32 || e.type === 'click')) return;
   if (infoJogo.inicial) {
+    audioIniciar.play();
     infoJogo.inicial = false;
     infoJogo.jogando = true;
   } else if (infoJogo.jogando) {
@@ -321,6 +338,7 @@ const jogar = () => {
 };
 
 canvas.addEventListener("click", jogar);
+window.addEventListener('keydown', jogar);
 
 const loopJogo = () => {
   frames++;
