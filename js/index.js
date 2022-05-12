@@ -67,13 +67,16 @@ const passarinho = {
     ctx.drawImage(this.img, this.x, this.y);
   },
   atualizar() {
-    if(this.colissoes()){
+    if (this.colissoes()) {
       infoJogo.jogando = false;
       infoJogo.morto = true;
       return;
+    } else {
+      this.velocidade = this.velocidade + this.gravidade;
+      this.y = this.y + this.velocidade;
+      canos.pontuar ? infoJogo.pontuacao++ : "";
+      canos.pontuar = false;
     }
-    this.velocidade = this.velocidade + this.gravidade;
-    this.y = this.y + this.velocidade;
   },
   pular() {
     this.velocidade = -this.impulso;
@@ -96,12 +99,13 @@ const passarinho = {
           if (
             this.y - this.img.height / 2 <= dSuperior ||
             this.y + this.img.height / 2 >= yInferior
-          ) return true;
+          )
+            return true;
         } else return false;
       }
     };
 
-    const retorno = (cChao || cCanos()) ? true : false;
+    const retorno = cChao || cCanos() ? true : false;
 
     return retorno;
   },
@@ -112,6 +116,7 @@ const canos = {
   inferior: new Image(),
   espacamento: 85,
   pares: [],
+  pontuar: false,
   desenhar() {
     this.pares.forEach((par) => {
       this.superior.src = "./images/cano-topo.png";
@@ -137,8 +142,9 @@ const canos = {
       par.x -= 2;
     });
 
-    if (this.pares.length && this.pares[0].x < -this.superior.width) {
+    if (this.pares.length && this.pares[0].x < (this.superior.width - (this.superior.width + 10))) {
       this.pares.shift();
+      this.pontuar = true;
     }
   },
 };
@@ -212,29 +218,39 @@ const elementosTela = {
           canvasAltura / 2 - 20
         );
 
-        let recorde = +localStorage.getItem("recorde");
+        const temRecorde = +localStorage.getItem("recorde");
 
-        if (recorde) {
-          const quebrouRecorde = infoJogo.pontuacao > recorde;
-          quebrouRecorde
-            ? localStorage.setItem("recorde", infoJogo.pontuacao)
-            : "";
-          quebrouRecorde ? (recorde = infoJogo.pontuacao) : "";
+        if (temRecorde) {
+          if (temRecorde < infoJogo.pontuacao) {
+            localStorage.setItem("recorde", infoJogo.pontuacao);
+            ctx.font = "35px Squada One";
+            ctx.fillText(
+              `Pontuação: ${infoJogo.pontuacao}`,
+              canvasLargura / 2 - 85,
+              canvasAltura / 2 - 20
+            );
+            ctx.strokeText(
+              `Pontuação: ${infoJogo.pontuacao}`,
+              canvasLargura / 2 - 85,
+              canvasAltura / 2 - 20
+            );
+            return;
+          } else {
+            ctx.font = "35px Squada One";
+            ctx.fillText(
+              `Recorde: ${temRecorde}`,
+              canvasLargura / 2 - 65,
+              canvasAltura / 2 + 15
+            );
+            ctx.strokeText(
+              `Recorde: ${temRecorde}`,
+              canvasLargura / 2 - 65,
+              canvasAltura / 2 + 15
+            );
+          }
         } else {
           localStorage.setItem("recorde", infoJogo.pontuacao);
         }
-
-        ctx.font = "35px Squada One";
-        ctx.fillText(
-          `Recorde: ${recorde}`,
-          canvasLargura / 2 - 65,
-          canvasAltura / 2 + 15
-        );
-        ctx.strokeText(
-          `Recorde: ${recorde}`,
-          canvasLargura / 2 - 65,
-          canvasAltura / 2 + 15
-        );
       }
     },
   },
@@ -245,6 +261,7 @@ const elementosTelaAdd = () => {
     passarinho.x = 25;
     passarinho.y = 50;
     passarinho.velocidade = 0;
+    infoJogo.pontuacao = 0;
     const canosArray = canos.pares;
     for (let i = 0; i < canosArray.length; i++) {
       canosArray.pop();
@@ -279,7 +296,7 @@ const jogar = () => {
     infoJogo.jogando = true;
   } else if (infoJogo.jogando) {
     passarinho.pular();
-  } else if(infoJogo.morto){
+  } else if (infoJogo.morto) {
     infoJogo.morto = false;
     infoJogo.jogando = false;
     infoJogo.inicial = true;
